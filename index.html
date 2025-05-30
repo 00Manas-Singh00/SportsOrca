@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upcoming Basketball Matches</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 50px 0;
+        }
+
+        .error {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            color: #ff3b30;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .match-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .match-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .league-name {
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .match-status {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 15px;
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .teams-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .team {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .vs-divider {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0 20px;
+        }
+
+        .match-time {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .date {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4ecdc4;
+        }
+
+        .time {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
+        .venue {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 10px;
+        }
+
+        .api-info {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .match-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Upcoming Basketball Matches</h1>
+        </div>
+
+        <button class="refresh-btn" onclick="fetchMatches()">Refresh Matches</button>
+
+        <div id="loading" class="loading">
+            Loading upcoming matches...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="matches-container" class="matches-grid"></div>
+
+        <div class="api-info">
+            <p><strong>API Source:</strong> API-Sports Basketball API</p>
+            <p><strong>Endpoint:</strong> https://api-basketball.p.rapidapi.com/games</p>
+            <p>Showing upcoming NBA games for the next 7 days</p>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'demo'; // Replace with your API key from RapidAPI
+        const API_HOST = 'api-basketball.p.rapidapi.com';
+        
+        //This is mock data for demonstration purpose
+        const sampleMatches = [
+            {
+                id: 1,
+                league: { name: "NBA" },
+                teams: {
+                    home: { name: "Los Angeles Lakers" },
+                    away: { name: "Boston Celtics" }
+                },
+                date: new Date(Date.now() + 86400000).toISOString(), 
+                venue: { name: "Crypto.com Arena", city: "Los Angeles" },
+                status: { long: "Not Started" }
+            },
+            {
+                id: 2,
+                league: { name: "NBA" },
+                teams: {
+                    home: { name: "Golden State Warriors" },
+                    away: { name: "Miami Heat" }
+                },
+                date: new Date(Date.now() + 172800000).toISOString(), 
+                venue: { name: "Chase Center", city: "San Francisco" },
+                status: { long: "Not Started" }
+            },
+            {
+                id: 3,
+                league: { name: "NBA" },
+                teams: {
+                    home: { name: "Chicago Bulls" },
+                    away: { name: "New York Knicks" }
+                },
+                date: new Date(Date.now() + 259200000).toISOString(), 
+                venue: { name: "United Center", city: "Chicago" },
+                status: { long: "Not Started" }
+            },
+            {
+                id: 4,
+                league: { name: "NBA" },
+                teams: {
+                    home: { name: "Phoenix Suns" },
+                    away: { name: "Dallas Mavericks" }
+                },
+                date: new Date(Date.now() + 345600000).toISOString(), 
+                venue: { name: "Footprint Center", city: "Phoenix" },
+                status: { long: "Not Started" }
+            },
+            {
+                id: 5,
+                league: { name: "NBA" },
+                teams: {
+                    home: { name: "Denver Nuggets" },
+                    away: { name: "Milwaukee Bucks" }
+                },
+                date: new Date(Date.now() + 432000000).toISOString(), 
+                venue: { name: "Ball Arena", city: "Denver" },
+                status: { long: "Not Started" }
+            },
+            {
+                id: 6,
+                league: { name: "NBA" },
+                teams: {
+                    home: { name: "Toronto Raptors" },
+                    away: { name: "Philadelphia 76ers" }
+                },
+                date: new Date(Date.now() + 518400000).toISOString(), 
+                venue: { name: "Scotiabank Arena", city: "Toronto" },
+                status: { long: "Not Started" }
+            }
+        ];
+
+        async function fetchMatches() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const container = document.getElementById('matches-container');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            container.innerHTML = '';
+
+            try {    
+                
+                // Uncomment the following lines to fetch live data from the API
+                // const response = await fetch('https://api-basketball.p.rapidapi.com/games?season=2024-2025&league=12', {
+                //     method: 'GET',
+                //     headers: {
+                //         'X-RapidAPI-Key': API_KEY,
+                //         'X-RapidAPI-Host': API_HOST
+                //     }
+                // });
+
+                // if (!response.ok) {
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+
+                // const data = await response.json();
+                
+
+                // Using sample data for demonstration
+                const data = { response: sampleMatches };
+                
+                loading.style.display = 'none';
+                
+                if (data.response && data.response.length > 0) {
+                    displayMatches(data.response);
+                } else {
+                    container.innerHTML = '<div class="error">No upcoming matches found.</div>';
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.innerHTML = `
+                    <h3>Demo Mode Active</h3>
+                    <p>This demo uses sample data. To use live data:</p>
+                    <ol style="text-align: left; display: inline-block; margin-top: 10px;">
+                        <li>Get a free API key from <a href="https://rapidapi.com/api-sports/api/api-basketball/" target="_blank" style="color: #4ecdc4;">RapidAPI Basketball API</a></li>
+                        <li>Replace the 'demo' API key in the code</li>
+                        <li>Uncomment the fetch request in the JavaScript</li>
+                    </ol>
+                `;
+
+                displayMatches(sampleMatches);
+            }
+        }
+
+        function displayMatches(matches) {
+            const container = document.getElementById('matches-container');
+            
+            container.innerHTML = matches.map(match => {
+                const matchDate = new Date(match.date);
+                const formattedDate = matchDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const formattedTime = matchDate.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <div class="match-card">
+                        <div class="match-header">
+                            <div class="league-name">${match.league.name}</div>
+                            <div class="match-status">${match.status.long}</div>
+                        </div>
+                        
+                        <div class="teams-container">
+                            <div class="team">
+                                <div class="team-name">${match.teams.away.name}</div>
+                                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Away</div>
+                            </div>
+                            <div class="vs-divider">VS</div>
+                            <div class="team">
+                                <div class="team-name">${match.teams.home.name}</div>
+                                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Home</div>
+                            </div>
+                        </div>
+                        
+                        <div class="match-time">
+                            <div class="date">${formattedDate}</div>
+                            <div class="time">${formattedTime}</div>
+                            ${match.venue ? `<div class="venue">${match.venue.name}, ${match.venue.city}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        fetchMatches();
+    </script>
+</body>
+</html>
