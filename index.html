@@ -232,7 +232,7 @@
     </div>
 
     <script>
-        const API_KEY = 'demo'; // Replace with your API key from RapidAPI
+        const API_KEY = '74ae5aa3afmshe93450fa03c416cp128cd6jsna77499d561d7'; // Replace with your API key from RapidAPI
         const API_HOST = 'api-basketball.p.rapidapi.com';
         
         //This is mock data for demonstration purpose
@@ -317,23 +317,27 @@
             try {    
                 
                 // Uncomment the following lines to fetch live data from the API
-                // const response = await fetch('https://api-basketball.p.rapidapi.com/games?season=2024-2025&league=12', {
-                //     method: 'GET',
-                //     headers: {
-                //         'X-RapidAPI-Key': API_KEY,
-                //         'X-RapidAPI-Host': API_HOST
-                //     }
-                // });
+                const url = 'https://api-basketball.p.rapidapi.com/countries';
+                const options = {
+	            method: 'GET',
+	            headers: {
+		            'x-rapidapi-key': '74ae5aa3afmshe93450fa03c416cp128cd6jsna77499d561d7',
+		            'x-rapidapi-host': 'api-basketball.p.rapidapi.com'
+	                    }
+                };
+                const response = await fetch(url, options);
 
-                // if (!response.ok) {
-                //     throw new Error(`HTTP error! status: ${response.status}`);
-                // }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-                // const data = await response.json();
+                const data = await response.json();
+
+                
                 
 
                 // Using sample data for demonstration
-                const data = { response: sampleMatches };
+                // const data = { response: sampleMatches };
                 
                 loading.style.display = 'none';
                 
